@@ -4,11 +4,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // Corrigir nome do tileset conforme seu arquivo real
-        this.load.tilemapTiledJSON('cityMap', 'city_map.json');
-        this.load.image('tileset', 'Assets/images/tile/town_tileset.png');
+        // Corrigido: nome do mapa JSON
+        this.load.tilemapTiledJSON('dungeon', 'Assets/maps/dungeon_map.json');
 
-        // Corrigir para seu sprite sheet real
+        // Tileset imagem correta
+        this.load.image('Map01', 'Assets/images/tile/Map01.png');
+
+        // Spritesheet do jogador
         this.load.spritesheet('adventurer', 'Assets/images/adventurer.png', {
             frameWidth: 50,
             frameHeight: 37
@@ -16,21 +18,23 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Mapa
-        const map = this.make.tilemap({ key: 'cityMap' });
+        // Cria o tilemap
+        const map = this.make.tilemap({ key: 'dungeon' });
 
-        // ⚠️ O nome "tileset" abaixo precisa ser:
-        // - o MESMO nome usado no Tiled como nome do tileset
-        // - e o mesmo que está no JSON ("tileset.png")
-        const tileset = map.addTilesetImage('tileset', 'tileset');
+        // Adiciona tileset (nome no Tiled e nome da imagem)
+        const tileset = map.addTilesetImage('Map01', 'Map01');
 
-        const ground = map.createLayer('Ground', tileset, 0, 0);
+        // Cria camadas – nomes reais no JSON
+        map.createLayer('Camada de Blocos 1', tileset, 0, 0);
+        map.createLayer('Camada de Blocos 2', tileset, 0, 0);
+        map.createLayer('Camada de Blocos 3', tileset, 0, 0);
+        map.createLayer('Camada de Blocos 4', tileset, 0, 0);
 
         // Player
-        this.player = this.physics.add.sprite(100, 100, 'adventurer');
+        this.player = this.physics.add.sprite(32, 32, 'adventurer');
         this.player.setCollideWorldBounds(true);
 
-        // Câmera
+        // Câmera segue o jogador
         this.cameras.main.startFollow(this.player);
         this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
@@ -38,6 +42,7 @@ export default class GameScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
+        // Animações
         this.createAnimations();
     }
 
@@ -79,7 +84,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.anims.create({
             key: 'attack',
-            frames: this.anims.generateFrameNumbers('adventurer', { start: 16, end: 19 }), // ajuste conforme sprite real
+            frames: this.anims.generateFrameNumbers('adventurer', { start: 16, end: 19 }),
             frameRate: 12,
             repeat: 0
         });
