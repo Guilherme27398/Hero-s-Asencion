@@ -4,19 +4,34 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // Adicionar tratamento de erros para carregamento de assets
+        this.load.on('loaderror', (fileObj) => {
+            console.error('Erro ao carregar:', fileObj.src);
+        });
+
+        this.load.on('filecomplete', (key) => {
+            console.log('Asset carregado com sucesso:', key);
+        });
+
         this.load.tilemapTiledJSON('dungeon', 'Assets/maps/dungeonnewmap.json');
         this.load.image('Map01', 'Assets/images/tile/Map01.png');
+        this.load.image('furniture', 'Assets/images/tile/fancy_mansion_furnitureset.png');
+        this.load.image('B32x32', 'Assets/images/tile/B32x32.png');
         this.load.spritesheet('adventurer', 'Assets/images/adventurer.png', { frameWidth: 50, frameHeight: 37 });
         this.load.spritesheet('adventurer_run', 'Assets/images/adventurer-run-Sheet.png', { frameWidth: 50, frameHeight: 37 });
     }
 
     create() {
         const map = this.make.tilemap({ key: 'dungeon' });
-        const tileset = map.addTilesetImage('Map01', 'Map01');
-        this.blocks1 = map.createLayer('Camada de Blocos 1', tileset, 0, 0);
-        this.blocks2 = map.createLayer('Camada de Blocos 2', tileset, 0, 0);
-        this.blocks3 = map.createLayer('Camada de Blocos 3', tileset, 0, 0);
-        this.blocks4 = map.createLayer('Camada de Blocos 4', tileset, 0, 0);
+        const tileset1 = map.addTilesetImage('Map01', 'Map01');
+        const tileset2 = map.addTilesetImage('fancy_mansion_furnitureset', 'furniture');
+        const tileset3 = map.addTilesetImage('B32x32', 'B32x32');
+        
+        // Criar as camadas usando todos os tilesets
+        this.blocks1 = map.createLayer('Camada de Blocos 1', [tileset1, tileset2, tileset3], 0, 0);
+        this.blocks2 = map.createLayer('Camada de Blocos 2', [tileset1, tileset2, tileset3], 0, 0);
+        this.blocks3 = map.createLayer('Camada de Blocos 3', [tileset1, tileset2, tileset3], 0, 0);
+        this.blocks4 = map.createLayer('Camada de Blocos 4', [tileset1, tileset2, tileset3], 0, 0);
 
         this.player = this.physics.add.sprite(32, 32, 'adventurer');
         this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
