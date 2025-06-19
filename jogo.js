@@ -2,6 +2,8 @@
 
 import MenuScene  from './scenes/MenuScene.js';
 import GameScene  from './scenes/GameScene.js';
+import DeathScene from './scenes/DeathScene.js';
+import WinScene from './scenes/WinScene.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -16,10 +18,14 @@ const config = {
   },
 
   physics: {
-    default: 'arcade'
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 0 },
+      debug: false
+    }
   },
 
-  scene: [ MenuScene, GameScene ]
+  scene: [ MenuScene, GameScene, DeathScene, WinScene ]
 };
 
 const game = new Phaser.Game(config);

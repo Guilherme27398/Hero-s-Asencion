@@ -15,7 +15,7 @@ export default class GameScene extends Phaser.Scene {
         this.load.spritesheet('adventurer_run', 'Assets/images/adventurer-run-Sheet.png', { frameWidth: 50, frameHeight: 37 });
         this.load.spritesheet('slime', 'Assets/images/enemies/slime-Sheet.png', { frameWidth: 32, frameHeight: 28 });
         this.load.spritesheet('golem', 'Assets/images/enemies/fire-golem-Sheet.png', { frameWidth: 64 , frameHeight: 57 });
-        this.load.spritesheet('phantom-knight-Sheet', 'Assets/images/enemies/phantom-knight-Sheet.png', { frameWidth: 64, frameHeight: 64 });
+        this.load.spritesheet('reaper', 'Assets/images/enemies/reaper-Sheet.png', { frameWidth: 48 , frameHeight: 46  });
     }
 
     create() {
@@ -40,7 +40,7 @@ export default class GameScene extends Phaser.Scene {
         // CÂMARA
         this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
         this.cameras.main.startFollow(this.player);
-        this.cameras.main.setZoom(1);
+        this.cameras.main.setZoom(2.5);
 
         // INPUT
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -73,25 +73,15 @@ export default class GameScene extends Phaser.Scene {
         this.lastDamageTime = 0;
         this.regenDelay = 15000; // 15 segundos
         this.regenRate = 3000; // 3 segundos
-        this.regenAmount = 5;
+        this.regenAmount = 10;
         this.nextRegenTime = 0;
         this.isPlayerDead = false;
         this.regenStartHealth = this.currentHealth;
-        // Fundo preto da barra fixa na tela
-        this.healthBarBg = this.add.rectangle(20, 20, 204, 24, 0x000000)
-            .setOrigin(0, 0)
-            .setScrollFactor(0)
-            .setDepth(9999);
+      
+    
         // Barra vermelha (vida) fixa na tela
-        this.healthBarRect = this.add.rectangle(22, 22, 200, 20, 0xff0000)
-            .setOrigin(0, 0)
-            .setScrollFactor(0)
-            .setDepth(10000);
-        // Texto da vida fixa na tela
-        this.healthBarText = this.add.text(24, 24, `${this.currentHealth}/${this.maxHealth}`, { font: '16px Arial', fill: '#fff' })
-            .setScrollFactor(0)
-            .setDepth(10001);
-        this.updateHealthBar();
+       
+
 
         // === BARRA DE VIDA EM CIMA DO PLAYER ===
         this.playerHealthBarBg = this.add.rectangle(0, 0, 40, 8, 0x000000)
@@ -112,19 +102,23 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.bridgeTrigger, () => {
             if (!this.bridgeTriggered) {
                 this.bridgeTriggered = true;
+                // Spawn de slimes
                 this.spawnSlime(14*tileSize,28*tileSize);
                 this.spawnSlime(5*tileSize,25*tileSize);
-                this.spawnSlime(19*tileSize,30*tileSize);
-                this.spawnSlime(4*tileSize,32*tileSize);
                 this.spawnSlime(15*tileSize,23*tileSize);
                 this.spawnSlime(2*tileSize,22*tileSize);
+                
+                
+                // Spawn de golems
                 this.spawnGolem(50 * tileSize, 50 * tileSize);
                 this.spawnGolem(62 * tileSize, 52 * tileSize);
                 this.spawnGolem(48 * tileSize, 48 * tileSize);
-                // Spawn de phantom knights para teste (dentro da sala principal)
-                this.spawnPhantomKnight(20 * tileSize, 20 * tileSize);
-                this.spawnPhantomKnight(22 * tileSize, 20 * tileSize);
-                this.spawnPhantomKnight(24 * tileSize, 20 * tileSize);
+                // Spawn de Reaper
+                this.spawnReaper(40 * tileSize, 18 * tileSize);
+                this.spawnReaper(42 * tileSize, 10 * tileSize);
+                this.spawnReaper(90 * tileSize, 45 * tileSize);
+                this.spawnReaper(85 * tileSize, 40 * tileSize);
+                
                 [this.blocks1,this.blocks2,this.blocks3,this.blocks4].forEach(layer => this.physics.add.collider(this.enemies, layer));
             }
         }, null, this);
@@ -153,6 +147,14 @@ export default class GameScene extends Phaser.Scene {
         this.player.setTint(0x555555);
         this.player.setVelocity(0);
         this.player.anims.stop();
+
+        // Fade out
+        this.cameras.main.fadeOut(1000, 0, 0, 0);
+
+        // Quando o fade out terminar, muda para a DeathScene
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            this.scene.start('DeathScene');
+        });
     }
 
     createAnimations() {
@@ -176,11 +178,11 @@ export default class GameScene extends Phaser.Scene {
         this.anims.create({ key:'golem_attack', frames:this.anims.generateFrameNumbers('golem',{start:12,end:17}), frameRate:10, repeat:0 });
         this.anims.create({ key:'golem_die', frames:this.anims.generateFrameNumbers('golem',{start:36,end:41}), frameRate:8, repeat:0 });
 
-        // PHANTOM KNIGHT ANIMATIONS 
-        this.anims.create({ key:'phantom_idle', frames:this.anims.generateFrameNumbers('phantom-knight-Sheet',{start:0,end:3}), frameRate:6, repeat:-1 });
-        this.anims.create({ key:'phantom_walk', frames:this.anims.generateFrameNumbers('phantom-knight-Sheet',{start:4,end:7}), frameRate:8, repeat:-1 });
-        this.anims.create({ key:'phantom_attack', frames:this.anims.generateFrameNumbers('phantom-knight-Sheet',{start:8,end:11}), frameRate:10, repeat:0 });
-        this.anims.create({ key:'phantom_die', frames:this.anims.generateFrameNumbers('phantom-knight-Sheet',{start:12,end:15}), frameRate:8, repeat:0 });
+        // REAPER ANIMATIONS
+        this.anims.create({ key:'reaper_idle', frames:this.anims.generateFrameNumbers('reaper',{start:0,end:3}), frameRate:6, repeat:-1 });
+        this.anims.create({ key:'reaper_walk', frames:this.anims.generateFrameNumbers('reaper',{start:4,end:7}), frameRate:8, repeat:-1 });
+        this.anims.create({ key:'reaper_attack', frames:this.anims.generateFrameNumbers('reaper',{start:8,end:11}), frameRate:10, repeat:0 });
+        this.anims.create({ key:'reaper_die', frames:this.anims.generateFrameNumbers('reaper',{start:12,end:25}), frameRate:8, repeat:0 });
     }
 
     spawnSlime(x,y) {
@@ -193,10 +195,12 @@ export default class GameScene extends Phaser.Scene {
         slime.body.setImmovable(false);
         slime.body.setSize(20, 18).setOffset(6, 12);
        
-        slime.on('animationcomplete-slime_attack', () => {
-            slime.isAttacking = false;
-            slime.state = 'walk';
-            if (slime.anims && this.anims.exists('slime_walk')) slime.play('slime_walk', true);
+        slime.on('animationcomplete-slime_attack', (anim, frame, sprite) => {
+            const s = sprite || slime;
+            if (!s || !s.active || !s.anims) return;
+            s.isAttacking = false;
+            s.state = 'walk';
+            if (s.anims && this.anims.exists('slime_walk')) s.play('slime_walk', true);
         });
         return slime;
     }
@@ -214,10 +218,12 @@ export default class GameScene extends Phaser.Scene {
         golem.isAttacking = false;
         golem.body.setImmovable(false);
         golem.body.setSize(44, 48).setOffset(10, 7);
-        golem.on('animationcomplete-golem_attack', () => {
-            golem.isAttacking = false;
-            golem.state = 'walk';
-            if (golem.anims && this.anims.exists('golem_walk')) golem.play('golem_walk', true);
+        golem.on('animationcomplete-golem_attack', (anim, frame, sprite) => {
+            const g = sprite || golem;
+            if (!g || !g.active || !g.anims) return;
+            g.isAttacking = false;
+            g.state = 'walk';
+            if (g.anims && this.anims.exists('golem_walk')) g.play('golem_walk', true);
         });
         [this.blocks1, this.blocks2, this.blocks3, this.blocks4].forEach(layer => {
             this.physics.add.collider(golem, layer);
@@ -226,30 +232,28 @@ export default class GameScene extends Phaser.Scene {
         return golem;
     }
 
-    spawnPhantomKnight(x, y) {
-        const knight = this.enemies.create(x, y, 'phantom-knight-Sheet');
-        console.log('Spawned:', knight.texture.key);
-        knight.setCollideWorldBounds(true);
-        knight.health = 70;
-        knight.maxHealth = 70;
-        knight.damage = 40;
-        knight.state = 'idle';
-        knight.nextMoveTime = 0;
-        knight.setDepth(10);
-        knight.play('phantom_idle');
-        knight.isAttacking = false;
-        knight.body.setImmovable(false);
-        knight.body.setSize(44, 56).setOffset(10, 8); 
-        knight.on('animationcomplete-phantom_attack', () => {
-            knight.isAttacking = false;
-            knight.state = 'walk';
-            if (knight.anims && this.anims.exists('phantom_walk')) knight.play('phantom_walk', true);
+    spawnReaper(x, y) {
+        const reaper = this.enemies.create(x, y, 'reaper');
+        reaper.health = 30;
+        reaper.maxHealth = 30;
+        reaper.damage = 15;
+        reaper.state = 'idle';
+        reaper.nextMoveTime = 0;
+        reaper.setDepth(10);
+        reaper.play('reaper_idle');
+        reaper.isAttacking = false;
+        reaper.body.setImmovable(false);
+        reaper.body.setSize(44, 56).setOffset(10, 8);
+        // Não colide com nada!
+        reaper.body.checkCollision.none = true;
+        reaper.on('animationcomplete-reaper_attack', (anim, frame, sprite) => {
+            const r = sprite || reaper;
+            if (!r || !r.active || !r.anims) return;
+            r.isAttacking = false;
+            r.state = 'walk';
+            if (r.anims && this.anims.exists('reaper_walk')) r.play('reaper_walk', true);
         });
-        [this.blocks1, this.blocks2, this.blocks3, this.blocks4].forEach(layer => {
-            this.physics.add.collider(knight, layer);
-        });
-        this.physics.add.collider(knight, this.enemies);
-        return knight;
+        return reaper;
     }
 
     onPlayerHit(player, slime) {
@@ -307,194 +311,50 @@ export default class GameScene extends Phaser.Scene {
         else if (this.cursors.down.isDown||this.wasd.down.isDown) { this.player.setVelocityY(speed); this.player.anims.play('down',true); }
         else { this.player.anims.play('idle',true); }
 
+        // Verifica condição de vitória
+        if (this.enemies.getChildren().length === 0) { // Se todos os inimigos estiverem mortos
+            // Pega o tile na posição atual do player
+            const playerTileX = Math.floor(this.player.x / 32);
+            const playerTileY = Math.floor(this.player.y / 32);
+            
+            // Verifica se o player está em um tile do tipo 472 (tile de vitória)
+            const victoryTile = this.blocks1.getTileAt(playerTileX, playerTileY) || 
+                              this.blocks2.getTileAt(playerTileX, playerTileY) ||
+                              this.blocks3.getTileAt(playerTileX, playerTileY) ||
+                              this.blocks4.getTileAt(playerTileX, playerTileY);
+            
+            if (victoryTile && victoryTile.index === 472) {
+                // Inicia a sequência de vitória
+                this.cameras.main.fadeOut(1000);
+                this.cameras.main.once('camerafadeoutcomplete', () => {
+                    this.scene.start('WinScene');
+                });
+            }
+        }
+
         if (this.enemies) this.enemies.children.iterate(enemy => {
-            if (!enemy || !enemy.body || enemy.state==='die') return;
-            console.log('Enemy:', enemy.texture.key, 'Health:', enemy.health, 'State:', enemy.state);
-            // GOLEM IA
-            if (enemy.texture.key === 'golem') {
-                if (enemy.health<=0 && enemy.state!=='die') {
-                    enemy.state='die';
-                    enemy.setVelocity(0);
-                    if (enemy.anims && this.anims.exists('golem_die')) enemy.play('golem_die', true);
-                    this.time.delayedCall(700,()=>{ if(enemy) enemy.destroy(); });
-                    return;
-                }
-                if (enemy.state==='attack' || enemy.isAttacking) {
-                    enemy.setVelocity(0);
-                    return;
-                }
-                const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y);
-                if (dist < 56) {
-                    if (!enemy.isAttacking) {
-                        enemy.isAttacking = true;
-                        enemy.state = 'attack';
-                        enemy.setVelocity(0);
-                        if (enemy.anims && this.anims.exists('golem_attack')) enemy.play('golem_attack', true);
-                        this.currentHealth -= enemy.damage;
-                        this.updateHealthBar();
-                    }
-                    return;
-                }
-                if (dist < 220) {
-                    enemy.state = 'walk';
-                    this.physics.moveToObject(enemy, this.player, 60);
-                    if (this.player.x < enemy.x) {
-                        enemy.setFlipX(false);
-                    } else {
-                        enemy.setFlipX(true);
-                    }
-                    if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'golem_walk' && this.anims.exists('golem_walk')) {
-                        enemy.play('golem_walk', true);
-                    }
-                } else {
-                    if (enemy.state !== 'idle') {
-                        enemy.state = 'idle';
-                        enemy.setVelocity(0);
-                    }
-                    if (time > enemy.nextMoveTime) {
-                        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-                        const vx = Math.cos(angle) * 20;
-                        enemy.setVelocity(vx, Math.sin(angle) * 20);
-                        if (vx < 0) {
-                            enemy.setFlipX(false);
-                        } else {
-                            enemy.setFlipX(true);
-                        }
-                        enemy.nextMoveTime = time + Phaser.Math.Between(1000, 2000);
-                        if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'golem_walk' && this.anims.exists('golem_walk')) {
-                            enemy.play('golem_walk', true);
-                        }
-                    }
-                }
+            if (!enemy || !enemy.body || !enemy.active || enemy.state === 'die') return;
+
+            // Verificar morte primeiro, antes de qualquer outra lógica
+            if (enemy.health <= 0 && enemy.state !== 'die') {
+                this.handleEnemyDeath(enemy);
                 return;
-            }
-            // Morreu
-            if (enemy.health<=0 && enemy.state!=='die') {
-                enemy.state='die';
-                enemy.setVelocity(0);
-                if (enemy.texture.key === 'slime' && enemy.anims && this.anims.exists('slime_die')) {
-                    enemy.play('slime_die', true);
-                    this.time.delayedCall(500,()=>{ if(enemy) enemy.destroy(); });
-                } else if (enemy.texture.key === 'golem' && enemy.anims && this.anims.exists('golem_die')) {
-                    enemy.play('golem_die', true);
-                    this.time.delayedCall(700,()=>{ if(enemy) enemy.destroy(); });
-                } else {
-                    enemy.destroy();
-                }
-                return;
-            }
-            // Se atacando, não faz nada
-            if (enemy.state==='attack' || enemy.isAttacking) {
-                enemy.setVelocity(0);
-                return;
-            }
-            // Se perto do player, para e ataca
-            const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y);
-            if (dist < 48) {
-                if (!enemy.isAttacking) {
-                    enemy.isAttacking = true;
-                    enemy.state = 'attack';
-                    enemy.setVelocity(0);
-                    if (enemy.anims && this.anims.exists('slime_attack')) enemy.play('slime_attack', true);
-                    this.currentHealth -= enemy.damage;
-                    this.updateHealthBar();
-                }
-                return;
-            }
-            // Persegue o player se estiver perto
-            if (dist < 180) {
-                enemy.state = 'chase';
-                this.physics.moveToObject(enemy, this.player, 60);
-                // Flip slime conforme direção do player (corrigido)
-                if (this.player.x < enemy.x) {
-                    enemy.setFlipX(false);
-                } else {
-                    enemy.setFlipX(true);
-                }
-                if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'slime_walk' && this.anims.exists('slime_walk')) {
-                    enemy.play('slime_walk', true);
-                }
-            } else {
-                // Anda aleatório
-                if (enemy.state !== 'idle') {
-                    enemy.state = 'idle';
-                    enemy.setVelocity(0);
-                }
-                if (time > enemy.nextMoveTime) {
-                    const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-                    const vx = Math.cos(angle) * 20;
-                    enemy.setVelocity(vx, Math.sin(angle) * 20);
-                    // Flip slime conforme direção do movimento aleatório (corrigido)
-                    if (vx < 0) {
-                        enemy.setFlipX(false);
-                    } else {
-                        enemy.setFlipX(true);
-                    }
-                    enemy.nextMoveTime = time + Phaser.Math.Between(1000, 2000);
-                    if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'slime_walk' && this.anims.exists('slime_walk')) {
-                        enemy.play('slime_walk', true);
-                    }
-                }
             }
 
-            // PHANTOM KNIGHT IA
-            if (enemy.texture.key === 'phantom-knight-Sheet') {
-                if (enemy.health<=0 && enemy.state!=='die') {
-                    enemy.state='die';
-                    enemy.setVelocity(0);
-                    if (enemy.anims && this.anims.exists('phantom_die')) enemy.play('phantom_die', true);
-                    this.time.delayedCall(600,()=>{ if(enemy) enemy.destroy(); });
-                    return;
-                }
-                if (enemy.state==='attack' || enemy.isAttacking) {
-                    enemy.setVelocity(0);
-                    return;
-                }
-                const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y);
-                if (dist < 48) {
-                    if (!enemy.isAttacking) {
-                        enemy.isAttacking = true;
-                        enemy.state = 'attack';
-                        enemy.setVelocity(0);
-                        if (enemy.anims && this.anims.exists('phantom_attack')) enemy.play('phantom_attack', true);
-                        this.currentHealth -= enemy.damage;
-                        this.updateHealthBar();
-                    }
-                    return;
-                }
-                if (dist < 180) {
-                    enemy.state = 'chase';
-                    this.physics.moveToObject(enemy, this.player, 80);
-                    if (this.player.x < enemy.x) {
-                        enemy.setFlipX(false);
-                    } else {
-                        enemy.setFlipX(true);
-                    }
-                    if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'phantom_walk' && this.anims.exists('phantom_walk')) {
-                        enemy.play('phantom_walk', true);
-                    }
-                } else {
-                    if (enemy.state !== 'idle') {
-                        enemy.state = 'idle';
-                        enemy.setVelocity(0);
-                    }
-                    if (time > enemy.nextMoveTime) {
-                        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-                        const vx = Math.cos(angle) * 30;
-                        enemy.setVelocity(vx, Math.sin(angle) * 30);
-                        if (vx < 0) {
-                            enemy.setFlipX(false);
-                        } else {
-                            enemy.setFlipX(true);
-                        }
-                        enemy.nextMoveTime = time + Phaser.Math.Between(1000, 2000);
-                        if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'phantom_walk' && this.anims.exists('phantom_walk')) {
-                            enemy.play('phantom_walk', true);
-                        }
-                    }
-                }
+            // GOLEM IA
+            if (enemy.texture.key === 'golem') {
+                this.updateGolemAI(enemy, time);
                 return;
             }
+
+            // REAPER IA
+            if (enemy.texture.key === 'reaper') {
+                this.updateReaperAI(enemy, time);
+                return;
+            }
+
+            // SLIME IA (default)
+            this.updateSlimeAI(enemy, time);
         });
         // Atualiza posição da barra de vida acima do player
         if (this.player && this.playerHealthBar && this.playerHealthBarBg) {
@@ -512,6 +372,211 @@ export default class GameScene extends Phaser.Scene {
                 this.currentHealth = Math.min(this.currentHealth + this.regenAmount, maxRegen);
                 this.updateHealthBar();
                 this.nextRegenTime = time + this.regenRate;
+            }
+        }
+    }
+
+    handleEnemyDeath(enemy) {
+        if (!enemy || !enemy.active) return;
+        
+        enemy.state = 'die';
+        enemy.setVelocity(0);
+        
+        switch(enemy.texture.key) {
+            case 'slime':
+                if (enemy.anims && this.anims.exists('slime_die')) {
+                    enemy.play('slime_die', true);
+                    this.time.delayedCall(500, () => {
+                        if (enemy && enemy.active) enemy.destroy();
+                    });
+                }
+                break;
+                
+            case 'golem':
+                if (enemy.anims && this.anims.exists('golem_die')) {
+                    enemy.play('golem_die', true);
+                    this.time.delayedCall(700, () => {
+                        if (enemy && enemy.active) enemy.destroy();
+                    });
+                }
+                break;
+                
+            case 'reaper':
+                if (enemy.anims && this.anims.exists('reaper_die')) {
+                    enemy.play('reaper_die', true);
+                    this.time.delayedCall(600, () => {
+                        if (enemy && enemy.active) enemy.destroy();
+                    });
+                }
+                break;
+                
+            default:
+                if (enemy && enemy.active) enemy.destroy();
+        }
+    }
+
+    updateGolemAI(enemy, time) {
+        if (enemy.health<=0 && enemy.state!=='die') {
+            enemy.state='die';
+            enemy.setVelocity(0);
+            if (enemy.anims && this.anims.exists('golem_die')) enemy.play('golem_die', true);
+            this.time.delayedCall(700,()=>{ if(enemy && enemy.active) enemy.destroy(); });
+            return;
+        }
+        if (enemy.state==='attack' || enemy.isAttacking) {
+            enemy.setVelocity(0);
+            return;
+        }
+        const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+        if (dist < 56) {
+            if (!enemy.isAttacking) {
+                enemy.isAttacking = true;
+                enemy.state = 'attack';
+                enemy.setVelocity(0);
+                if (enemy.anims && this.anims.exists('golem_attack')) enemy.play('golem_attack', true);
+                this.currentHealth -= enemy.damage;
+                this.updateHealthBar();
+            }
+            return;
+        }
+        if (dist < 220) {
+            enemy.state = 'walk';
+            this.physics.moveToObject(enemy, this.player, 60);
+            if (this.player.x < enemy.x) {
+                enemy.setFlipX(false);
+            } else {
+                enemy.setFlipX(true);
+            }
+            if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'golem_walk' && this.anims.exists('golem_walk')) {
+                enemy.play('golem_walk', true);
+            }
+        } else {
+            if (enemy.state !== 'idle') {
+                enemy.state = 'idle';
+                enemy.setVelocity(0);
+            }
+            if (time > enemy.nextMoveTime) {
+                const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+                const vx = Math.cos(angle) * 20;
+                enemy.setVelocity(vx, Math.sin(angle) * 20);
+                if (vx < 0) {
+                    enemy.setFlipX(false);
+                } else {
+                    enemy.setFlipX(true);
+                }
+                enemy.nextMoveTime = time + Phaser.Math.Between(1000, 2000);
+                if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'golem_walk' && this.anims.exists('golem_walk')) {
+                    enemy.play('golem_walk', true);
+                }
+            }
+        }
+    }
+
+    updateReaperAI(enemy, time) {
+        if (enemy.health<=0 && enemy.state!=='die') {
+            enemy.state='die';
+            enemy.setVelocity(0);
+            if (enemy.anims && this.anims.exists('reaper_die')) enemy.play('reaper_die', true);
+            this.time.delayedCall(600,()=>{ if(enemy && enemy.active) enemy.destroy(); });
+            return;
+        }
+        if (enemy.state==='attack' || enemy.isAttacking) {
+            enemy.setVelocity(0);
+            return;
+        }
+        const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+        if (dist < 48) {
+            if (!enemy.isAttacking) {
+                enemy.isAttacking = true;
+                enemy.state = 'attack';
+                enemy.setVelocity(0);
+                if (enemy.anims && this.anims.exists('reaper_attack')) enemy.play('reaper_attack', true);
+                this.currentHealth -= enemy.damage;
+                this.updateHealthBar();
+            }
+            return;
+        }
+        if (dist < 250) {  // Aumenta o alcance de detecção
+            enemy.state = 'chase';
+            this.physics.moveToObject(enemy, this.player, 100);  // Aumenta a velocidade
+            if (this.player.x < enemy.x) {
+                enemy.setFlipX(false);
+            } else {
+                enemy.setFlipX(true);
+            }
+            if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'reaper_walk' && this.anims.exists('reaper_walk')) {
+                enemy.play('reaper_walk', true);
+            }
+        } else {  // Se não detectou o player, procura por ele
+            enemy.state = 'search';
+            // Move em direção ao último local conhecido do player, mas mais lentamente
+            this.physics.moveToObject(enemy, this.player, 50);
+            if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'reaper_walk' && this.anims.exists('reaper_walk')) {
+                enemy.play('reaper_walk', true);
+            }
+        }
+    }
+
+    updateSlimeAI(enemy, time) {
+        if (enemy.health<=0 && enemy.state!=='die') {
+            enemy.state='die';
+            enemy.setVelocity(0);
+            if (enemy.texture.key === 'slime' && enemy.anims && this.anims.exists('slime_die')) {
+                enemy.play('slime_die', true);
+                this.time.delayedCall(500,()=>{ if(enemy && enemy.active) enemy.destroy(); });
+            } else if (enemy.texture.key === 'golem' && enemy.anims && this.anims.exists('golem_die')) {
+                enemy.play('golem_die', true);
+                this.time.delayedCall(700,()=>{ if(enemy && enemy.active) enemy.destroy(); });
+            } else {
+                if(enemy && enemy.active) enemy.destroy();
+            }
+            return;
+        }
+        if (enemy.state==='attack' || enemy.isAttacking) {
+            enemy.setVelocity(0);
+            return;
+        }
+        const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+        if (dist < 48) {
+            if (!enemy.isAttacking) {
+                enemy.isAttacking = true;
+                enemy.state = 'attack';
+                enemy.setVelocity(0);
+                if (enemy.anims && this.anims.exists('slime_attack')) enemy.play('slime_attack', true);
+                this.currentHealth -= enemy.damage;
+                this.updateHealthBar();
+            }
+            return;
+        }
+        if (dist < 180) {
+            enemy.state = 'chase';
+            this.physics.moveToObject(enemy, this.player, 60);
+            if (this.player.x < enemy.x) {
+                enemy.setFlipX(false);
+            } else {
+                enemy.setFlipX(true);
+            }
+            if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'slime_walk' && this.anims.exists('slime_walk')) {
+                enemy.play('slime_walk', true);
+            }
+        } else {
+            if (enemy.state !== 'idle') {
+                enemy.state = 'idle';
+                enemy.setVelocity(0);
+            }
+            if (time > enemy.nextMoveTime) {
+                const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+                const vx = Math.cos(angle) * 20;
+                enemy.setVelocity(vx, Math.sin(angle) * 20);
+                if (vx < 0) {
+                    enemy.setFlipX(false);
+                } else {
+                    enemy.setFlipX(true);
+                }
+                enemy.nextMoveTime = time + Phaser.Math.Between(1000, 2000);
+                if (enemy.anims && enemy.anims.currentAnim && enemy.anims.currentAnim.key !== 'slime_walk' && this.anims.exists('slime_walk')) {
+                    enemy.play('slime_walk', true);
+                }
             }
         }
     }
