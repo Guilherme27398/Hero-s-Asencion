@@ -7,9 +7,9 @@ const config = {
   type: Phaser.AUTO,
   parent: 'game-container',
 
-  // Usa o Scale Manager para manter proporção e ajustar ao ecrã
+ 
   scale: {
-    mode: Phaser.Scale.FIT,              // mantém proporção
+    mode: Phaser.Scale.FIT,             
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width:  window.innerWidth,
     height: window.innerHeight,
@@ -24,7 +24,7 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-// Em caso de redimensionar a janela, reajusta
+
 window.addEventListener('resize', () => {
   game.scale.resize(window.innerWidth, window.innerHeight);
 });
